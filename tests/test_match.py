@@ -15,7 +15,7 @@ OWNED = {"butterpaperbakes.shop"}
 FIXTURES = os.path.join(os.path.dirname(__file__), "..", "worker", "sample_events.json")
 
 
-def msg(domains, sha256="AA:BB"):
+def msg(domains, sha256="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"):
     return {"message_type": "certificate_update", "data": {
         "leaf_cert": {"sha256": sha256, "all_domains": domains,
                       "issuer": {"aggregated": "/CN=Sample Test CA"}},
@@ -63,7 +63,7 @@ def test_wildcard_lookalike_still_flagged():
 
 def test_repeated_certificate_dedupes_event_and_case():
     db = fresh_db()
-    m = msg(["butterpaperbakes-shop.test"], sha256="DE:AD")
+    m = msg(["butterpaperbakes-shop.test"], sha256="DEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDEDE")
     assert save_event(db, m, WATCH, OWNED) == (True, True)
     assert save_event(db, m, WATCH, OWNED) == (False, False)
     assert db.execute("SELECT count(*) FROM ct_events").fetchone()[0] == 1
@@ -90,7 +90,7 @@ def test_fixture_run_marks_cases_as_sample():
 
 def test_default_source_is_live():
     db = fresh_db()
-    save_event(db, msg(["butterpaperbakes-shop.test"], sha256="LI:VE"), WATCH, OWNED)
+    save_event(db, msg(["butterpaperbakes-shop.test"], sha256="ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB"), WATCH, OWNED)
     assert db.execute("SELECT source FROM cases").fetchone()[0] == "live"
 
 
