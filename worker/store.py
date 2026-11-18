@@ -11,11 +11,19 @@ confirmed fake. Re-saving the same certificate never duplicates a case.
 """
 import json
 import os
+import re
 import sqlite3
 import time
 from pathlib import Path
 
 from match import find_match
+
+# The certstream sidecar emits sha256 as colon-separated uppercase hex, 32
+# bytes ("AB:CD:...:FF", 95 chars). Provenance between sample and live rows
+# is enforced at write time by disjoint formats: the live path accepts only
+# a full-length sha256 (colon-separated or plain 64-char hex), and the
+# sample path refuses anything in that real format.
+_LIVE_SHA256 = re.compile(r"^(([0-9A-Fa-f]{2}:){31}[0-9A-Fa-f]{2}|[0-9A-Fa-f]{64})$")
 
 # Default database location: one file at the repo root, so the replay script
 # and the web app share the same data no matter which folder you run them
@@ -53,6 +61,24 @@ def open_db(path):
     return db
 
 
+def prune_ct_events(db, keep):
+    """Keep only the newest `keep` certificate events (0 = keep everything).
+
+    Certificates referenced by a case are never pruned: a candidate's
+    underlying evidence must survive. Cases themselves are never deleted here.
+    """
+    if not keep:
+        return 0
+    cur = db.execute(
+        """DELETE FROM ct_events
+           WHERE sha256 NOT IN (SELECT sha256 FROM cases)
+             AND sha256 NOT IN (SELECT sha256 FROM ct_events ORDER BY saved_at DESC LIMIT ?)""",
+        (keep,),
+    )
+    db.commit()
+    return cur.rowcount
+
+
 def save_event(db, message, watch_terms, owned_domains, source="live"):
     """Save one certstream-shaped message. Returns (is_new_certificate, is_new_case).
 
@@ -66,6 +92,11 @@ def save_event(db, message, watch_terms, owned_domains, source="live"):
     sha256 = leaf.get("sha256")
     if not sha256:
         return (False, False)
+    if source == "live" and not _LIVE_SHA256.match(sha256):
+        print(f"skipped event: hash not in certificate sha256 format: {sha256!r}", flush=True)
+        return (False, False)
+    if source == "sample" and _LIVE_SHA256.match(sha256):
+        raise ValueError(f"sample data must not use a realistic certificate hash: {sha256!r}")
     src = data.get("source") or {}
     issuer = (leaf.get("issuer") or {}).get("aggregated")
     domains = leaf.get("all_domains") or []
