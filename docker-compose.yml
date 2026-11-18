@@ -1,15 +1,48 @@
-# Minimal dev setup: one service for the web app; the same service runs the
-# sample replay and the tests via `docker compose run`.
-# DB_PATH points at a named volume so `run` and `up` share one database.
+# LookalikeLens dev setup.
+# app     - the web app (also runs the tests and the sample replay)
+# worker  - consumes the LIVE certificate feed (starts in smoke mode)
+# certstream - the local Certificate Transparency sidecar
+# All service ports bind to 127.0.0.1 only: nothing is reachable off this Mac.
+# app and worker share one named volume, so /cases sees what either path saved.
 services:
   app:
     build: .
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
       DB_PATH: /data/brand_watch.db
     volumes:
       - bw-data:/data
+
+  worker:
+    build: ./worker
+    depends_on:
+      - certstream
+    environment:
+      CERTSTREAM_URL: ws://certstream:8080/
+      DB_PATH: /data/brand_watch.db
+      WATCH_TERMS: "butterpaperbakes"
+      OWNED_DOMAINS: "butterpaperbakes.shop"
+      # First run is a smoke test: it stops after saving 1 new certificate.
+      # Set MAX_EVENTS: "0" for continuous watching.
+      MAX_EVENTS: "1"
+      # Best-effort event retention: keep only the newest 10000 certificate
+      # events (0 = unlimited). Cases and their certificates are kept
+      # permanently, so this bounds the event log, not total storage.
+      RETENTION_MAX_EVENTS: "10000"
+    volumes:
+      - bw-data:/data
+
+  certstream:
+    image: ghcr.io/reloading01/certstream-server-rust:1.7.6
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./state:/app/state
+    environment:
+      # Persist the feed position so restarts resume instead of replaying.
+      CERTSTREAM_CT_LOG_STATE_FILE: /app/state/certstream_state.json
+    restart: unless-stopped
 
 volumes:
   bw-data:
