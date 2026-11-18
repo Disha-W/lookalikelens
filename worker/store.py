@@ -13,8 +13,15 @@ import json
 import os
 import sqlite3
 import time
+from pathlib import Path
 
 from match import find_match
+
+# Default database location: one file at the repo root, so the replay script
+# and the web app share the same data no matter which folder you run them
+# from. Override with the DB_PATH environment variable (Docker sets this).
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_DB_PATH = REPO_ROOT / "brand_watch.db"
 
 
 def open_db(path):
