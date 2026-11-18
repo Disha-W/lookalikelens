@@ -11,7 +11,7 @@ import json
 import os
 import sys
 
-from store import open_db, save_event
+from store import DEFAULT_DB_PATH, open_db, save_event
 
 WATCH_TERMS = [t.strip() for t in os.environ.get("WATCH_TERMS", "butterpaperbakes").split(",") if t.strip()]
 OWNED_DOMAINS = {d.strip().lower() for d in os.environ.get("OWNED_DOMAINS", "butterpaperbakes.shop").split(",") if d.strip()}
@@ -19,7 +19,7 @@ OWNED_DOMAINS = {d.strip().lower() for d in os.environ.get("OWNED_DOMAINS", "but
 
 def main():
     events_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), "sample_events.json")
-    db_path = sys.argv[2] if len(sys.argv) > 2 else os.environ.get("DB_PATH", "brand_watch.db")
+    db_path = sys.argv[2] if len(sys.argv) > 2 else os.environ.get("DB_PATH", str(DEFAULT_DB_PATH))
     with open(events_path) as f:
         doc = json.load(f)
     events = doc["events"] if isinstance(doc, dict) else doc
