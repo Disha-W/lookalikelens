@@ -41,3 +41,24 @@ python3 -m pytest tests/
 
 The web app itself needs Python 3.10+ (its pinned packages require it) or
 Docker.
+
+## Connect the real certificate feed (live mode)
+
+The `certstream` sidecar streams real Certificate Transparency events; the
+`worker` service saves them (marked `"source": "live"`).
+
+```sh
+# smoke test: worker stops after saving 1 real certificate
+docker compose up --build
+
+# then set MAX_EVENTS: "0" in docker-compose.yml for continuous watching
+```
+
+Honest limit: a look-alike address appears on the live feed only if a real
+CA actually issues such a certificate, which may never happen during the
+demo. The live feed proves the connection works (the saved-certificate count
+grows); the "we caught one" moment still comes from the clearly marked
+sample data. Storage use is bounded for the event log only: the newest 10000
+certificates are kept (RETENTION_MAX_EVENTS). Cases and their underlying
+certificates are kept permanently, so total size still grows with the
+number of cases.
