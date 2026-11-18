@@ -11,10 +11,13 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app.routes.cases import router as cases_router
+
 BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI(title="LookalikeLens")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+app.include_router(cases_router)
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 
