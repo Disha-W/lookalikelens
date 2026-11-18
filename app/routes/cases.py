@@ -6,12 +6,16 @@ their source ("live" or "sample") so sample data is always recognizable.
 """
 import os
 import sqlite3
+from pathlib import Path
 
 from fastapi import APIRouter
 
 router = APIRouter()
 
-DB_PATH = os.environ.get("DB_PATH", "brand_watch.db")
+# Same default database as worker/store.py: one file at the repo root, so the
+# app reads what the replay script wrote regardless of working directory.
+# Override with the DB_PATH environment variable (Docker sets this).
+DB_PATH = os.environ.get("DB_PATH") or str(Path(__file__).resolve().parents[2] / "brand_watch.db")
 
 
 @router.get("/cases")
