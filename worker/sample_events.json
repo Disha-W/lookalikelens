@@ -1,0 +1,88 @@
+{
+  "description": "MADE-UP SAMPLE certificate events for local testing only. These are not real certificates and not live findings. Every domain here is either reserved (.test) or the brand's own domain used as a must-clear case.",
+  "events": [
+    {
+      "message_type": "certificate_update",
+      "data": {
+        "leaf_cert": {
+          "sha256": "SAMPLELOOKALIKE00000000000000000000000000000000000000000000000001",
+          "all_domains": [
+            "butterpaperbakes-shop.test",
+            "www.butterpaperbakes-shop.test"
+          ],
+          "issuer": {
+            "aggregated": "/CN=Sample Test CA"
+          }
+        },
+        "cert_index": 101,
+        "seen": 1763400000.0,
+        "submission_timestamp": 1763399999.0,
+        "source": {
+          "name": "Sample CT log (fixture)"
+        }
+      }
+    },
+    {
+      "message_type": "certificate_update",
+      "data": {
+        "leaf_cert": {
+          "sha256": "SAMPLEOWNSUBDOMAIN0000000000000000000000000000000000000000000002",
+          "all_domains": [
+            "login.butterpaperbakes.shop"
+          ],
+          "issuer": {
+            "aggregated": "/CN=Sample Test CA"
+          }
+        },
+        "cert_index": 102,
+        "seen": 1763400001.0,
+        "submission_timestamp": 1763400000.5,
+        "source": {
+          "name": "Sample CT log (fixture)"
+        }
+      }
+    },
+    {
+      "message_type": "certificate_update",
+      "data": {
+        "leaf_cert": {
+          "sha256": "SAMPLEUNRELATED0000000000000000000000000000000000000000000000003",
+          "all_domains": [
+            "example.test",
+            "*.example.test"
+          ],
+          "issuer": {
+            "aggregated": "/CN=Sample Test CA"
+          }
+        },
+        "cert_index": 103,
+        "seen": 1763400002.0,
+        "submission_timestamp": 1763400001.5,
+        "source": {
+          "name": "Sample CT log (fixture)"
+        }
+      }
+    },
+    {
+      "message_type": "certificate_update",
+      "data": {
+        "leaf_cert": {
+          "sha256": "SAMPLELOOKALIKE00000000000000000000000000000000000000000000000001",
+          "all_domains": [
+            "butterpaperbakes-shop.test",
+            "www.butterpaperbakes-shop.test"
+          ],
+          "issuer": {
+            "aggregated": "/CN=Sample Test CA"
+          }
+        },
+        "cert_index": 104,
+        "seen": 1763400003.0,
+        "submission_timestamp": 1763400002.5,
+        "source": {
+          "name": "Sample CT log (fixture)"
+        }
+      }
+    }
+  ]
+}
