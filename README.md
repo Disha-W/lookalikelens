@@ -13,7 +13,7 @@ feed is not connected yet.
 ```sh
 docker compose build
 
-# run the tests (expect: 11 passed)
+# run the tests (expect: 17 passed)
 docker compose run --rm app python -m pytest tests/ -q
 
 # replay the MADE-UP sample events into the shared database
