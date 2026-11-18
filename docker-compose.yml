@@ -1,0 +1,15 @@
+# Minimal dev setup: one service for the web app; the same service runs the
+# sample replay and the tests via `docker compose run`.
+# DB_PATH points at a named volume so `run` and `up` share one database.
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DB_PATH: /data/brand_watch.db
+    volumes:
+      - bw-data:/data
+
+volumes:
+  bw-data:
