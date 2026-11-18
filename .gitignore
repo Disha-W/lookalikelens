@@ -38,3 +38,6 @@ venv/
 # Local databases
 *.db
 *.sqlite3
+
+# certstream feed position (local state)
+state/
