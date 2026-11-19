@@ -9,8 +9,8 @@
 # It only ADDS rows and capture files; nothing existing is deleted or reset.
 #
 # Real review (one Claude API call per case; the key is passed through, never
-# stored or printed):
-#   export ANTHROPIC_API_KEY=...      # your own key
+# stored or printed). Type it WITHOUT echoing or saving it in shell history:
+#   read -s ANTHROPIC_API_KEY; export ANTHROPIC_API_KEY
 #   sh bin/demo-review.sh
 #
 # Offline practice (no key, no network call, unmistakably labelled mock):
