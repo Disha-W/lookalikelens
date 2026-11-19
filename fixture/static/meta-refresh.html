@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<!-- Safety-test page: tries a client-side (meta refresh) redirect to a
+     loopback address. The collector must abort that navigation. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0;url=http://127.0.0.1:8000/">
+  <title>meta refresh trap</title>
+</head>
+<body>
+  <p>This page tries to send the browser to a loopback address.</p>
+</body>
+</html>
