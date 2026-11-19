@@ -3,20 +3,29 @@
 {% block content %}
 <div class="center-box">
   <h1>Which website is yours?</h1>
-  <p class="muted">Enter your business domain to set up your dashboard.
-  In this demo build, saving it does not start live monitoring: the
-  certificate watcher follows its own configured name.</p>
+  <p class="muted">Enter your business domain. LookalikeLens checks new
+  public certificate records for names that look like the watch name.
+  It never visits your website.</p>
   <form method="post" action="/watch">
     <label for="domain">Your domain</label>
     <div class="fieldrow">
       <input id="domain" name="domain" type="text" required
              placeholder="yourstore.com"
              value="{{ watch_domain or '' }}">
-      <button type="submit">Save and view dashboard</button>
+    </div>
+    <label for="watch_term">Watch name - what we look for in certificates</label>
+    <div class="fieldrow">
+      <input id="watch_term" name="watch_term" type="text"
+             placeholder="yourstore"
+             value="{{ watch_term or suggested_term or '' }}">
+      <button type="submit">Start watching</button>
     </div>
     {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
   </form>
-  <p class="hint">You can change this later. This field scopes your
-  dashboard; we never touch your website.</p>
+  <p class="hint">One watched domain at a time; saving a new one replaces the
+  old. The watch name is a simple name match - check it and edit it if the
+  suggestion is not quite right (for example.co.uk we suggest "example.co",
+  which misses lookalikes without "co"). The background watcher picks up a
+  saved change as new certificate records arrive.</p>
 </div>
 {% endblock %}
