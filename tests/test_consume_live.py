@@ -140,3 +140,37 @@ def test_sample_path_refuses_realistic_hash(tmp_path):
         "cert_index": 1, "seen": 1.0, "submission_timestamp": 1.0, "source": {"name": "Mock"}}}
     with pytest.raises(ValueError):
         save_event(db, bad, [WATCH], {OWNED}, source="sample")
+
+
+def test_watch_config_falls_back_to_environment(tmp_path, monkeypatch):
+    """No dashboard settings: the compose environment decides."""
+    db = open_db(str(tmp_path / "t.db"))
+    terms, owned, source = consume_live.load_watch_config(
+        db, {"WATCH_TERMS": "envterm, second", "OWNED_DOMAINS": "env.example"})
+    assert terms == ["envterm", "second"]
+    assert owned == {"env.example"}
+    assert source == "environment"
+
+
+def test_watch_config_prefers_dashboard_settings(tmp_path):
+    """Saved dashboard settings override the environment."""
+    db = open_db(str(tmp_path / "t.db"))
+    from store import set_setting
+    set_setting(db, "watch_term", "dashterm")
+    set_setting(db, "watch_domain", "dash.example")
+    terms, owned, source = consume_live.load_watch_config(
+        db, {"WATCH_TERMS": "envterm", "OWNED_DOMAINS": "env.example"})
+    assert terms == ["dashterm"]
+    assert owned == {"dash.example"}
+    assert source == "dashboard"
+
+
+def test_watch_config_treats_half_written_pair_as_unset(tmp_path):
+    """A domain without a term must not silently re-point the watcher."""
+    db = open_db(str(tmp_path / "t.db"))
+    from store import set_setting
+    set_setting(db, "watch_domain", "dash.example")
+    terms, owned, source = consume_live.load_watch_config(
+        db, {"WATCH_TERMS": "envterm", "OWNED_DOMAINS": ""})
+    assert terms == ["envterm"]
+    assert source == "environment"
