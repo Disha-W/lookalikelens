@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<!-- Safety-test page: embeds a subresource on the cloud-metadata address.
+     The collector must refuse that subresource while still capturing the
+     page itself. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>page with private subresource</title>
+</head>
+<body>
+  <h1>Mostly normal page</h1>
+  <p>But it tries to load an image from a link-local metadata address:</p>
+  <img src="http://169.254.169.254/latest/meta-data/x.png" alt="trap">
+  <script src="http://192.168.0.1/steal.js"></script>
+</body>
+</html>
