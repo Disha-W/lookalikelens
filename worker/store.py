@@ -31,6 +31,10 @@ _LIVE_SHA256 = re.compile(r"^(([0-9A-Fa-f]{2}:){31}[0-9A-Fa-f]{2}|[0-9A-Fa-f]{64
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DB_PATH = REPO_ROOT / "brand_watch.db"
 
+# The only verdicts a case review may record. A review is a second opinion
+# for the owner's own decision - never a final accusation.
+REVIEW_VERDICTS = ("suspicious", "innocent", "unclear")
+
 
 def open_db(path):
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
@@ -76,6 +80,24 @@ def open_db(path):
             screenshot_sha256 TEXT,
             status TEXT NOT NULL,
             error TEXT,
+            source TEXT NOT NULL
+        )"""
+    )
+    # Reviews of a case: one row per review run. Each review weighs BOTH
+    # readings - what looks suspicious and what might be innocent - plus
+    # what is still unknown. verdict is one of REVIEW_VERDICTS; model says
+    # what produced it ("offline-mock" for the labelled practice mode, so a
+    # practice review can never be mistaken for a real Claude assessment).
+    db.execute(
+        """CREATE TABLE IF NOT EXISTS reviews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            case_sha256 TEXT NOT NULL REFERENCES cases(sha256),
+            created_at REAL NOT NULL,
+            verdict TEXT NOT NULL,
+            suspicious_reasons TEXT NOT NULL,
+            innocent_explanations TEXT NOT NULL,
+            unknowns TEXT NOT NULL,
+            model TEXT NOT NULL,
             source TEXT NOT NULL
         )"""
     )
@@ -142,6 +164,89 @@ def insert_evidence(db, case_sha256, meta, screenshot_path, screenshot_sha256):
     )
     db.commit()
     return cur.lastrowid
+
+
+def list_evidence(db, case_sha256):
+    """Return all evidence rows for a case, newest first, as dicts."""
+    keys = ("id", "captured_at", "target_url", "final_url", "http_status",
+            "title", "text_excerpt", "html_sha256", "screenshot_path",
+            "screenshot_sha256", "status", "error", "source")
+    rows = db.execute(
+        f"SELECT {', '.join(keys)} FROM evidence WHERE case_sha256 = ?"
+        " ORDER BY id DESC",
+        (case_sha256,),
+    ).fetchall()
+    return [dict(zip(keys, row)) for row in rows]
+
+
+def newest_evidence(db, case_sha256):
+    """Return the newest successful capture for a case as a dict.
+
+    Falls back to the newest row of any status (so a review can still say
+    the capture failed), then None when nothing was ever captured.
+    """
+    keys = ("id", "captured_at", "target_url", "final_url", "http_status",
+            "title", "text_excerpt", "html_sha256", "screenshot_path",
+            "screenshot_sha256", "status", "error", "source")
+    for status_filter in (" AND status = 'ok'", ""):
+        row = db.execute(
+            f"SELECT {', '.join(keys)} FROM evidence WHERE case_sha256 = ?{status_filter}"
+            " ORDER BY id DESC LIMIT 1",
+            (case_sha256,),
+        ).fetchone()
+        if row:
+            return dict(zip(keys, row))
+    return None
+
+
+def insert_review(db, case_sha256, review, model):
+    """Record one case review. Returns the review id.
+
+    Provenance is inherited from the case (sample stays sample). The verdict
+    must be one of REVIEW_VERDICTS - anything else is a bug in the caller,
+    not a new opinion.
+    """
+    case = get_case(db, case_sha256)
+    if case is None:
+        raise ValueError(f"no such case: {case_sha256}")
+    verdict = review.get("verdict")
+    if verdict not in REVIEW_VERDICTS:
+        raise ValueError(f"unknown verdict: {verdict!r}")
+    cur = db.execute(
+        """INSERT INTO reviews (
+            case_sha256, created_at, verdict, suspicious_reasons,
+            innocent_explanations, unknowns, model, source
+        ) VALUES (?,?,?,?,?,?,?,?)""",
+        (
+            case_sha256,
+            time.time(),
+            verdict,
+            json.dumps([str(s) for s in review.get("suspicious_reasons") or []]),
+            json.dumps([str(s) for s in review.get("innocent_explanations") or []]),
+            json.dumps([str(s) for s in review.get("unknowns") or []]),
+            model,
+            case["source"],
+        ),
+    )
+    db.commit()
+    return cur.lastrowid
+
+
+def latest_review(db, case_sha256):
+    """Return the newest review for a case as a dict, or None."""
+    keys = ("id", "created_at", "verdict", "suspicious_reasons",
+            "innocent_explanations", "unknowns", "model", "source")
+    row = db.execute(
+        f"SELECT {', '.join(keys)} FROM reviews WHERE case_sha256 = ?"
+        " ORDER BY id DESC LIMIT 1",
+        (case_sha256,),
+    ).fetchone()
+    if row is None:
+        return None
+    review = dict(zip(keys, row))
+    for field in ("suspicious_reasons", "innocent_explanations", "unknowns"):
+        review[field] = json.loads(review[field])
+    return review
 
 
 def prune_ct_events(db, keep):
