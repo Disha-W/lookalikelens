@@ -7,6 +7,7 @@ New certificates are checked for names that look like it.</p>
 
 <h2>Flagged sites</h2>
 {% if cases %}
+<div class="tablewrap">
 <table class="cases">
   <tr><th>Flagged domain</th><th>Verdict</th><th>Review</th><th>Found</th><th></th></tr>
   {% for c in cases %}
@@ -27,14 +28,15 @@ New certificates are checked for names that look like it.</p>
   </tr>
   {% endfor %}
 </table>
+</div>
 {% else %}
-<p class="muted">Nothing flagged yet. New certificates are checked as they appear.</p>
+<p class="muted">No stored cases yet.</p>
 {% endif %}
 
 {% if not watching_demo_name and has_sample_cases %}
 <p class="note">The sample cases above matched the staged demo name
-"{{ demo_watch_term }}", not {{ watch_domain }}. Nothing has been flagged
-for your domain yet.</p>
+"{{ demo_watch_term }}", not {{ watch_domain }}. There are no stored cases
+for your domain - and this demo build is not watching it yet.</p>
 {% endif %}
 
 <p class="foot">A flagged domain is a candidate, never proof. LookalikeLens
