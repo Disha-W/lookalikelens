@@ -1,1 +1,12 @@
 body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 4rem auto; padding: 0 1rem; line-height: 1.5; }
+.quiet { color: #666; font-size: .9rem; }
+.badge { display: inline-block; padding: .1rem .5rem; border-radius: .5rem; font-size: .8rem; font-weight: 600; }
+.badge-sample { background: #fff3cd; color: #7a5b00; border: 1px solid #e0c36a; }
+.badge-live { background: #e7f5e7; color: #1e6b1e; border: 1px solid #9ecf9e; }
+.verdict-suspicious { background: #f8d7da; color: #842029; }
+.verdict-innocent { background: #d1e7dd; color: #0f5132; }
+.verdict-unclear { background: #e2e3e5; color: #41464b; }
+.mock-warning { border: 1px solid #e0c36a; background: #fff3cd; color: #7a5b00; padding: .5rem .75rem; border-radius: .5rem; }
+.evidence { border-top: 1px solid #ddd; padding: .5rem 0; }
+blockquote { border-left: 3px solid #ccc; margin-left: 0; padding-left: .75rem; color: #444; }
+code { background: #f4f4f4; padding: .1rem .3rem; border-radius: .25rem; font-size: .85rem; }
