@@ -3,7 +3,9 @@
 #
 # The collector visits the local fake look-alike fixture page (never a real
 # site) and the evidence lands on your newest sample-marked case. Run this
-# first; it is the safe proof that capture works.
+# first; it is the safe proof that capture works. It only ADDS: one evidence
+# row in the database plus the capture files in the bw-evidence volume.
+# Nothing existing is deleted, reset or overwritten.
 #
 #   sh bin/demo-evidence.sh
 set -eu
