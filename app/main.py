@@ -29,10 +29,12 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 app.include_router(cases_router)
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
-# The dashboard's watched domain is the one the owner typed in. The live
-# certificate worker still uses its own configured watch terms (the compose
-# environment); the two are deliberately separate in this demo build.
+# The watched pair the owner typed in: their domain (never flagged) and the
+# watch name matched against new certificate records. The live worker reads
+# the same settings, so saving here genuinely changes what it watches -
+# one watched domain at a time, a new entry replaces the old.
 WATCH_DOMAIN_KEY = "watch_domain"
+WATCH_TERM_KEY = "watch_term"
 
 # Plain hostname validation: labels of letters/digits/hyphens, at least one
 # dot, letters-only TLD. No scheme, path, port or credentials.
@@ -40,26 +42,47 @@ _DOMAIN_RE = re.compile(
     r"^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$"
 )
 
-# The staged demo's own profile. Sample cases always belong to this name,
-# never to whatever domain the owner typed.
-DEMO_OWNED_DOMAIN = os.environ.get("OWNED_DOMAINS", "butterpaperbakes.shop").split(",")[0].strip()
-DEMO_WATCH_TERM = os.environ.get("WATCH_TERMS", "butterpaperbakes").split(",")[0].strip()
+# Watch-name validation: a short name of letters/digits/hyphens, 3-63 chars.
+_WATCH_NAME_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])?$")
 
+
+def derive_watch_name(domain):
+    """Default watch name: the domain without its final label.
+
+    Deliberately simple and VISIBLE - the owner can edit the result. Known
+    limit: for example.co.uk it suggests "example.co", which misses
+    lookalikes that do not contain "co"; editing the field is the fix.
+    """
+    labels = (domain or "").strip().lower().split(".")
+    return ".".join(labels[:-1]) if len(labels) > 1 else ""
 
 def valid_domain(value):
     """True when value is a plain domain name, nothing else."""
     return bool(_DOMAIN_RE.match((value or "").strip().lower()))
 
 
-def _get_watch_domain():
-    """The domain the owner entered, or None when the database/table is absent."""
-    if not os.path.exists(DB_PATH):
-        return None
-    db = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
-    try:
-        return store.get_setting(db, WATCH_DOMAIN_KEY)
-    finally:
-        db.close()
+def valid_watch_name(value):
+    """True when value is a usable watch name."""
+    return bool(_WATCH_NAME_RE.match((value or "").strip().lower()))
+
+
+def _get_watch_pair():
+    """The saved (watch_term, watch_domain), falling back to the compose env.
+
+    Mirrors the worker's precedence: dashboard settings first, then the
+    environment, so the dashboard describes what the watcher really does.
+    """
+    term = domain = None
+    if os.path.exists(DB_PATH):
+        db = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
+        try:
+            term, domain = store.load_watch_settings(db)
+        finally:
+            db.close()
+    if not term:
+        term = os.environ.get("WATCH_TERMS", "").split(",")[0].strip() or None
+        domain = os.environ.get("OWNED_DOMAINS", "").split(",")[0].strip() or None
+    return term, domain
 
 
 def _dashboard_cases():
@@ -99,26 +122,45 @@ def healthz():
 
 @app.get("/")
 def start(request: Request):
-    """Step 1: ask which domain to watch over."""
+    """Step 1: ask which domain and name to watch."""
+    term, domain = _get_watch_pair()
     return templates.TemplateResponse(request, "start.html", {
-        "watch_domain": _get_watch_domain(),
+        "watch_domain": domain,
+        "watch_term": term,
+        "suggested_term": None,
         "error": None,
     })
 
 
 @app.post("/watch")
 async def save_watch_domain(request: Request):
-    """Save the typed domain, then show the dashboard."""
+    """Save the typed domain and watch name, then show the dashboard.
+
+    This genuinely re-points the running watcher: it reads these settings
+    on its next feed message after its check interval, with no restart.
+    """
     form = await request.form()
     domain = str(form.get("domain", "")).strip().lower()
+    term = str(form.get("watch_term", "")).strip().lower() or derive_watch_name(domain)
+    _, old_domain = _get_watch_pair()
     if not valid_domain(domain):
         return templates.TemplateResponse(request, "start.html", {
-            "watch_domain": domain or _get_watch_domain(),
+            "watch_domain": domain or old_domain,
+            "watch_term": term,
+            "suggested_term": None,
             "error": "Please enter a plain domain name, like yourstore.com - no http://, slashes or spaces.",
         }, status_code=400)
-    db = sqlite3.connect(DB_PATH)
+    if not valid_watch_name(term):
+        return templates.TemplateResponse(request, "start.html", {
+            "watch_domain": domain,
+            "watch_term": term,
+            "suggested_term": None,
+            "error": "The watch name needs 3-63 letters, digits or hyphens - like yourstore.",
+        }, status_code=400)
+    db = store.open_db(DB_PATH)
     try:
         store.set_setting(db, WATCH_DOMAIN_KEY, domain)
+        store.set_setting(db, WATCH_TERM_KEY, term)
     finally:
         db.close()
     return RedirectResponse("/dashboard", status_code=303)
@@ -126,19 +168,23 @@ async def save_watch_domain(request: Request):
 
 @app.get("/dashboard")
 def dashboard(request: Request):
-    """Step 2: the watched domain and its flagged candidates."""
-    watch_domain = _get_watch_domain()
-    if not watch_domain:
+    """Step 2: the watched name and its flagged candidates.
+
+    Cases keep the matched term they were found under, so findings from an
+    earlier watch name are never presented as belonging to the current one.
+    Staged practice rows stay in their own section regardless of term.
+    """
+    watch_term, watch_domain = _get_watch_pair()
+    if not watch_domain and not watch_term:
         return RedirectResponse("/", status_code=303)
     cases = _dashboard_cases()
-    # Honesty guard: sample cases belong to the staged demo name. If the
-    # owner typed a different domain, say so instead of letting the staged
-    # rows read as findings for their domain.
-    watching_demo_name = watch_domain == DEMO_OWNED_DOMAIN
+    current = [c for c in cases if c["source"] == "live" and c["matched_term"] == watch_term]
+    earlier = [c for c in cases if c["source"] == "live" and c["matched_term"] != watch_term]
+    staged = [c for c in cases if c["source"] == "sample"]
     return templates.TemplateResponse(request, "dashboard.html", {
         "watch_domain": watch_domain,
-        "watching_demo_name": watching_demo_name,
-        "demo_watch_term": DEMO_WATCH_TERM,
-        "cases": cases,
-        "has_sample_cases": any(c["source"] == "sample" for c in cases),
+        "watch_term": watch_term,
+        "current_cases": current,
+        "earlier_cases": earlier,
+        "staged_cases": staged,
     })
