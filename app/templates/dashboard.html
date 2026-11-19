@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - LookalikeLens{% endblock %}
+{% block headernote %}<span class="muted">watching</span> <strong>{{ watch_domain }}</strong>{% endblock %}
+{% block content %}
+<p class="sub">Watching over <strong>{{ watch_domain }}</strong>.
+New certificates are checked for names that look like it.</p>
+
+<h2>Flagged sites</h2>
+{% if cases %}
+<table class="cases">
+  <tr><th>Flagged domain</th><th>Verdict</th><th>Review</th><th>Found</th><th></th></tr>
+  {% for c in cases %}
+  <tr>
+    <td class="dom">{{ c.domain }}
+      {% if c.source == "sample" %}<span class="pill pill-sample">sample</span>{% endif %}
+    </td>
+    <td>
+      {% if c.verdict %}<span class="pill verdict-{{ c.verdict }}">{{ c.verdict }}</span>
+      {% else %}<span class="muted">not reviewed</span>{% endif %}
+    </td>
+    <td class="muted">
+      {% if c.verdict %}{% if c.review_is_mock %}Practice review{% else %}Claude review{% endif %}
+      {% else %}-{% endif %}
+    </td>
+    <td class="muted">{{ c.first_seen }}</td>
+    <td><a class="open" href="/cases/{{ c.sha256 }}">Open</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="muted">Nothing flagged yet. New certificates are checked as they appear.</p>
+{% endif %}
+
+{% if not watching_demo_name and has_sample_cases %}
+<p class="note">The sample cases above matched the staged demo name
+"{{ demo_watch_term }}", not {{ watch_domain }}. Nothing has been flagged
+for your domain yet.</p>
+{% endif %}
+
+<p class="foot">A flagged domain is a candidate, never proof. LookalikeLens
+shows the evidence and the reasons; the owner decides what happens next.
+It never contacts, reports or takes down a website on its own.</p>
+{% endblock %}
