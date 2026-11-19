@@ -57,6 +57,12 @@ def build_prompt(case, evidence, owned_domains):
         f"- flagged domain: {case['domain']}",
         f"- case source: {case['source']} (sample means staged practice data)",
     ]
+    if case["source"] == "sample":
+        lines.append(
+            "- STAGED PRACTICE CASE: the captured page is an internal demo"
+            " fixture, not a real website, and the business profile above is"
+            " the demo configuration, not a verified baseline of a real"
+            " business. Review it as a demonstration of the format.")
     if evidence and evidence.get("status") == "ok":
         excerpt = (evidence.get("text_excerpt") or "")[:EXCERPT_LIMIT]
         lines += [
@@ -96,6 +102,8 @@ def build_prompt(case, evidence, owned_domains):
         "  (\"the page claims...\"), never state them as true.",
         "- Cite only what appears in the supplied evidence above. If a fact",
         "  matters but is not in the evidence, list it under \"unknowns\".",
+        "- There is no verified baseline capture of the real business to",
+        "  compare against: judge from the supplied evidence only.",
         "",
         "Reply with ONLY a JSON object, no other text:",
         '{"verdict": "suspicious" | "innocent" | "unclear",',
