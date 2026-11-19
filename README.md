@@ -14,13 +14,13 @@ clearly marked sample data. The report export is not built yet.
 ```sh
 docker compose build
 
-# run the tests (expect: 71 passed)
+# run the tests (expect: 98 passed)
 docker compose run --rm app python -m pytest tests/ -q
 
 # replay the MADE-UP sample events into the shared database
 docker compose run --rm app python worker/preview_feed.py
 
-# start the app, then open http://localhost:8000/cases
+# start the app, then open http://localhost:8000 (the owner dashboard)
 docker compose up
 ```
 
@@ -173,3 +173,20 @@ above) is config-checked here and first runs on your machine. The real
 Claude API call is exercised only with your own key on your machine - the
 tests here mock the API, so the live call itself is verified on your run,
 not here.
+
+## The owner pages (dashboard UI)
+
+Three pages, no sign-in in this demo build:
+
+1. `http://localhost:8000/` asks which domain to watch over and saves it.
+2. `http://localhost:8000/dashboard` lists the flagged candidates for it,
+   newest first, with each case's verdict and whether the review was a real
+   Claude call or an offline practice review.
+3. Opening a flagged site shows its details: why it was flagged, what could
+   be innocent, what is still unknown, and the captured evidence.
+
+The domain field scopes the dashboard only. The live certificate worker
+keeps its own configured watch terms (`WATCH_TERMS` in docker-compose.yml);
+multi-domain watching and accounts are not built yet. Sample cases always
+belong to the staged demo name: if you enter a different domain, the
+dashboard says the samples did not come from your domain.
