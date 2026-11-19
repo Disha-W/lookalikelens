@@ -1,12 +1,83 @@
-body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 4rem auto; padding: 0 1rem; line-height: 1.5; }
-.quiet { color: #666; font-size: .9rem; }
-.badge { display: inline-block; padding: .1rem .5rem; border-radius: .5rem; font-size: .8rem; font-weight: 600; }
-.badge-sample { background: #fff3cd; color: #7a5b00; border: 1px solid #e0c36a; }
-.badge-live { background: #e7f5e7; color: #1e6b1e; border: 1px solid #9ecf9e; }
-.verdict-suspicious { background: #f8d7da; color: #842029; }
-.verdict-innocent { background: #d1e7dd; color: #0f5132; }
-.verdict-unclear { background: #e2e3e5; color: #41464b; }
-.mock-warning { border: 1px solid #e0c36a; background: #fff3cd; color: #7a5b00; padding: .5rem .75rem; border-radius: .5rem; }
-.evidence { border-top: 1px solid #ddd; padding: .5rem 0; }
-blockquote { border-left: 3px solid #ccc; margin-left: 0; padding-left: .75rem; color: #444; }
-code { background: #f4f4f4; padding: .1rem .3rem; border-radius: .25rem; font-size: .85rem; }
+/* LookalikeLens owner UI. Palette: Mercury #EDE7DA, Shadow #84785F,
+   Coffee #A67956, Nutmeg #743C30, Lunar Green #3A4E37. */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #EDE7DA;
+  color: #2c2a24;
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 32px 32px; }
+
+.site-header {
+  max-width: 1080px; margin: 0 auto; padding: 24px 32px 14px;
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: 1px solid #d8cdb5;
+}
+.brand { font-size: 20px; font-weight: 700; color: #3A4E37; text-decoration: none; }
+.header-note { color: #84785F; font-size: 13px; }
+.header-note strong { color: #2c2a24; }
+
+h1 { font-size: 24px; font-weight: 700; margin: 18px 0 8px; }
+h2 { font-size: 16px; font-weight: 700; margin: 22px 0 8px; }
+.muted, .sub { color: #84785F; font-size: 14px; }
+.sub { padding-top: 12px; }
+.sub strong { color: #2c2a24; }
+.note { color: #84785F; font-size: 13px; line-height: 1.6; }
+.foot { margin-top: 22px; padding-top: 14px; border-top: 1px solid #d8cdb5;
+        color: #84785F; font-size: 12.5px; line-height: 1.6; }
+a { color: #3A4E37; }
+.open { color: #3A4E37; font-weight: 600; font-size: 14px; text-decoration: none; }
+
+/* Domain entry */
+.center-box { max-width: 560px; margin: 60px auto 40px; }
+.center-box label { display: block; font-size: 13px; font-weight: 600;
+                    color: #84785F; margin-bottom: 6px; }
+.fieldrow { display: flex; gap: 10px; }
+.fieldrow input {
+  flex: 1; background: #fffdf8; border: 1px solid #d8cdb5; border-radius: 8px;
+  padding: 12px 14px; font-size: 15px; color: #2c2a24;
+}
+.fieldrow button {
+  background: #3A4E37; color: #fff; border: 0; border-radius: 8px;
+  padding: 12px 22px; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.form-error { color: #743C30; font-size: 14px; margin-top: 10px; }
+.hint { font-size: 13px; color: #84785F; margin-top: 14px; line-height: 1.55; }
+
+/* Case list */
+table.cases { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.cases th { text-align: left; font-size: 12px; font-weight: 600; color: #84785F;
+            padding: 10px 12px; border-bottom: 1px solid #d8cdb5; }
+.cases td { padding: 14px 12px; font-size: 15px; border-bottom: 1px solid #e0d7c2;
+            vertical-align: middle; }
+.dom { font-weight: 600; }
+
+/* Pills */
+.pill { display: inline-block; font-size: 12px; font-weight: 600;
+        padding: 3px 10px; border-radius: 20px; margin-left: 6px; }
+.pills .pill { margin-left: 0; margin-right: 6px; }
+.pill-sample { background: #e0d7c2; color: #84785F; }
+.pill-live { background: #dde5dc; color: #3A4E37; }
+.verdict-suspicious { background: #eedfd9; color: #743C30; }
+.verdict-innocent { background: #dde5dc; color: #3A4E37; }
+.verdict-unclear { background: #efe6d2; color: #A67956; }
+
+/* Case page */
+.case-domain { margin-bottom: 6px; }
+.h-flag { color: #743C30; }
+.h-coffee { color: #A67956; }
+.h-green { color: #3A4E37; }
+ul { margin-left: 20px; padding: 0; }
+li { font-size: 15px; color: #3f3a30; margin-bottom: 6px; }
+.evidence { border-top: 1px solid #e0d7c2; padding: 14px 0; }
+.shot { max-width: 340px; width: 100%; border: 1px solid #d8cdb5;
+        border-radius: 8px; display: block; margin-bottom: 10px; }
+.rows .row { display: flex; gap: 18px; padding: 8px 0;
+             border-bottom: 1px solid #e0d7c2; font-size: 14.5px; }
+.rows .k { width: 190px; flex-shrink: 0; color: #84785F; }
+.claim { font-size: 12px; color: #A67956; font-weight: 600; }
+blockquote { border-left: 3px solid #d8cdb5; margin: 10px 0 0;
+             padding-left: 12px; color: #3f3a30; font-size: 14px; }
+code { background: #e0d7c2; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
