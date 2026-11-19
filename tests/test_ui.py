@@ -121,7 +121,7 @@ def test_dashboard_warns_when_domain_differs_from_demo():
     page = client.get("/dashboard")
     assert page.status_code == 200
     assert "matched the staged demo name" in page.text
-    assert "Nothing has been flagged" in page.text
+    assert "There are no stored cases" in page.text
 
 
 def test_case_page_renders_with_mock_provenance():
