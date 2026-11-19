@@ -83,6 +83,27 @@
           "name": "Sample CT log (fixture)"
         }
       }
+    },
+    {
+      "message_type": "certificate_update",
+      "data": {
+        "leaf_cert": {
+          "sha256": "SAMPLEINNOCENTLOOKALIKE0000000000000000000000000000000000000000004",
+          "all_domains": [
+            "butterpaperbakes-nashik.test",
+            "www.butterpaperbakes-nashik.test"
+          ],
+          "issuer": {
+            "aggregated": "/CN=Sample Test CA"
+          }
+        },
+        "cert_index": 105,
+        "seen": 1763400004.0,
+        "submission_timestamp": 1763400003.5,
+        "source": {
+          "name": "Sample CT log (fixture)"
+        }
+      }
     }
   ]
 }
