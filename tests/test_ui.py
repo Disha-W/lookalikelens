@@ -140,7 +140,7 @@ def test_dashboard_scopes_staged_rows_when_domain_differs():
     page = client.get("/dashboard")
     assert page.status_code == 200
     assert "Staged practice cases" in page.text
-    assert "Nothing flagged for this watch name yet" in page.text
+    assert "No stored findings for this watch name" in page.text
 
 
 def test_case_page_renders_with_mock_provenance():
@@ -202,5 +202,7 @@ def test_dashboard_states_pickup_cadence_honestly():
     client.post("/watch", data={"domain": "butterpaperbakes.shop"})
     page = client.get("/dashboard")
     assert page.status_code == 200
-    assert "as new records arrive" in page.text
-    assert "never visits your website" in page.text
+    flat = " ".join(page.text.split())
+    assert "as new records arrive" in flat
+    assert "while it is running" in flat
+    assert "never visits your website" in flat
