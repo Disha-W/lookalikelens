@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Case: {{ case.domain }} - LookalikeLens{% endblock %}
+{% block content %}
+<p><a href="/cases">all cases</a></p>
+<h1>{{ case.domain }}</h1>
+<p>
+  Looks like the watched name <strong>{{ case.matched_term }}</strong>.
+  First seen {{ case_when }}.
+  {% if case.source == "sample" %}<span class="badge badge-sample">SAMPLE DATA - staged practice case</span>
+  {% else %}<span class="badge badge-live">LIVE feed</span>{% endif %}
+</p>
+<p class="quiet">This is a candidate found in certificate data - a lead to
+review, not a confirmed fake. Nothing is reported or acted on automatically.</p>
+
+<section>
+  <h2>Claude review</h2>
+  {% if review %}
+  {% if review_is_mock %}
+  <p class="mock-warning">Practice review (offline mock) - NOT a real Claude
+  assessment. Run the review with a real API key to replace it.</p>
+  {% endif %}
+  <p>Verdict: <span class="badge verdict-{{ review.verdict }}">{{ review.verdict }}</span><br>
+  <span class="quiet">by {{ review.model }}, {{ review_when }}. Advice for your
+  own decision, not a final accusation.</span></p>
+  <h3>What looks suspicious</h3>
+  {% if review.suspicious_reasons %}
+  <ul>{% for item in review.suspicious_reasons %}<li>{{ item }}</li>{% endfor %}</ul>
+  {% else %}<p class="quiet">Nothing flagged in this reading.</p>{% endif %}
+  <h3>What might be innocent</h3>
+  {% if review.innocent_explanations %}
+  <ul>{% for item in review.innocent_explanations %}<li>{{ item }}</li>{% endfor %}</ul>
+  {% else %}<p class="quiet">No innocent explanation recorded.</p>{% endif %}
+  <h3>What is still unknown</h3>
+  {% if review.unknowns %}
+  <ul>{% for item in review.unknowns %}<li>{{ item }}</li>{% endfor %}</ul>
+  {% else %}<p class="quiet">No open questions recorded.</p>{% endif %}
+  {% else %}
+  <p class="quiet">No review yet. Run one with:
+  <code>docker compose run --rm -e ANTHROPIC_API_KEY app python worker/claude_review.py {{ case.sha256 }}</code></p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Captured evidence</h2>
+  {% if evidence %}
+  {% for item in evidence %}
+  <div class="evidence">
+    <p>
+      <a href="/cases/{{ case.sha256 }}/evidence/{{ item.id }}/screenshot">screenshot</a>
+      &middot; {{ item.target_url }}
+      {% if item.final_url and item.final_url != item.target_url %}&rarr; {{ item.final_url }}{% endif %}
+      {% if item.http_status %}(HTTP {{ item.http_status }}){% endif %}
+      &middot; <strong>{{ item.status }}</strong>
+    </p>
+    {% if item.title %}<p>Title: {{ item.title }}</p>{% endif %}
+    {% if item.text_excerpt %}<blockquote>{{ item.text_excerpt }}</blockquote>{% endif %}
+    {% if item.error %}<p class="quiet">Capture error: {{ item.error }}</p>{% endif %}
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="quiet">No evidence captured yet. Capture the staged practice page with
+  <code>sh bin/demo-evidence.sh</code>.</p>
+  {% endif %}
+</section>
+{% endblock %}
