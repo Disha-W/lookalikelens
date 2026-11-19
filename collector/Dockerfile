@@ -9,8 +9,11 @@ FROM mcr.microsoft.com/playwright/python:v1.49.1-jammy
 
 WORKDIR /app
 
-# pytest runs the boundary/integration tests inside this same image.
-RUN pip install --no-cache-dir pytest==9.2.0
+# The base image (built FROM ubuntu:jammy) ships Ubuntu's Python 3.10, the
+# playwright pip package built for this exact release, and its browsers.
+# Pin the package explicitly anyway so the match is checked at build time;
+# pytest (needs Python >=3.10) runs the boundary tests inside this image.
+RUN pip install --no-cache-dir playwright==1.49.1 pytest==9.2.0
 
 COPY worker/netguard.py ./
 COPY collector/capture.py ./
