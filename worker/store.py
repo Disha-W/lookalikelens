@@ -314,3 +314,35 @@ def save_event(db, message, watch_terms, owned_domains, source="live"):
         is_new_case = cur.rowcount == 1
     db.commit()
     return (is_new_cert, is_new_case)
+
+
+def get_setting(db, key):
+    """Read one dashboard setting, or None when unset.
+
+    Safe on a read-only connection: a missing settings table simply means
+    nothing was ever saved, so it reads as None instead of failing.
+    """
+    try:
+        row = db.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+    except sqlite3.OperationalError:
+        return None
+    return row[0] if row else None
+
+
+def set_setting(db, key, value):
+    """Save one dashboard setting, creating the table on first use.
+
+    Needs a writable connection. Existing databases upgrade in place.
+    """
+    db.execute(
+        """CREATE TABLE IF NOT EXISTS settings (
+             key TEXT PRIMARY KEY,
+             value TEXT NOT NULL
+           )"""
+    )
+    db.execute(
+        "INSERT INTO settings (key, value) VALUES (?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        (key, value),
+    )
+    db.commit()
