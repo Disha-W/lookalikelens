@@ -82,7 +82,7 @@ def test_settings_roundtrip(tmp_path):
 def test_start_page_renders():
     response = client.get("/")
     assert response.status_code == 200
-    assert "Which website should we watch over?" in response.text
+    assert "Which website is yours?" in response.text
 
 
 def test_dashboard_redirects_until_a_domain_is_saved():
@@ -131,3 +131,37 @@ def test_case_page_renders_with_mock_provenance():
     assert "Offline practice review" in page.text
     assert "sample case" in page.text
     assert "gift-card payment push" in page.text
+
+
+def test_missing_screenshot_file_shows_unavailable_note():
+    """A recorded screenshot whose file is gone gets an explicit note, not a broken image."""
+    db = store.open_db(os.environ["DB_PATH"])
+    db.execute(
+        "INSERT INTO evidence (case_sha256, captured_at, target_url, status,"
+        " source, screenshot_path)"
+        " VALUES (?, 0, 'http://fixture:8000/', 'ok', 'sample', 'gone/shot.png')",
+        (CASE_SHA,),
+    )
+    db.commit()
+    db.close()
+    page = client.get(f"/cases/{CASE_SHA}")
+    assert page.status_code == 200
+    assert "not available on this server" in page.text
+    assert '<img class="shot"' not in page.text
+
+
+def test_start_page_describes_setup_not_monitoring():
+    """The entry page must not promise live monitoring it does not start."""
+    page = client.get("/")
+    assert page.status_code == 200
+    assert "does not start live monitoring" in page.text
+    assert "Start watching" not in page.text
+
+
+def test_dashboard_disclaims_monitoring_scope():
+    """The dashboard says the field scopes the view, not live watching."""
+    page = client.get("/")
+    client.post("/watch", data={"domain": "butterpaperbakes.shop"})
+    page = client.get("/dashboard")
+    assert page.status_code == 200
+    assert "does not start\nmonitoring" in page.text or "does not start monitoring" in page.text.replace("\n", " ")
