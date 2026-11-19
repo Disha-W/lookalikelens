@@ -13,6 +13,7 @@ body {
 .site-header {
   max-width: 1080px; margin: 0 auto; padding: 24px 32px 14px;
   display: flex; justify-content: space-between; align-items: baseline;
+  gap: 6px 16px; flex-wrap: wrap;
   border-bottom: 1px solid #d8cdb5;
 }
 .brand { font-size: 20px; font-weight: 700; color: #3A4E37; text-decoration: none; }
@@ -47,6 +48,7 @@ a { color: #3A4E37; }
 .hint { font-size: 13px; color: #84785F; margin-top: 14px; line-height: 1.55; }
 
 /* Case list */
+.tablewrap { overflow-x: auto; }
 table.cases { width: 100%; border-collapse: collapse; margin-top: 8px; }
 .cases th { text-align: left; font-size: 12px; font-weight: 600; color: #84785F;
             padding: 10px 12px; border-bottom: 1px solid #d8cdb5; }
@@ -81,3 +83,12 @@ li { font-size: 15px; color: #3f3a30; margin-bottom: 6px; }
 blockquote { border-left: 3px solid #d8cdb5; margin: 10px 0 0;
              padding-left: 12px; color: #3f3a30; font-size: 14px; }
 code { background: #e0d7c2; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+
+@media (max-width: 640px) {
+  .wrap { padding: 0 16px 24px; }
+  .site-header { padding: 18px 16px 12px; }
+  .cases th, .cases td { padding: 10px 8px; font-size: 14px; }
+  .cases th { font-size: 11px; }
+}
+
+.domlink { color: inherit; font-weight: 600; }
