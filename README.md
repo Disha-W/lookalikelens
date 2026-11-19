@@ -122,9 +122,15 @@ still unknown - and saves that review on the case page
 the owner's own decision; nothing is reported or acted on automatically.
 
 ```sh
-export ANTHROPIC_API_KEY=...   # your own key; passed through, never stored or printed
+# type your own key without echoing it or leaving it in shell history:
+read -s ANTHROPIC_API_KEY; export ANTHROPIC_API_KEY
 sh bin/demo-review.sh          # two staged sample cases: impersonation + innocent near-name
 ```
+
+The key is passed through to one container run and never stored, printed or
+committed. Page text shown to Claude is treated as untrusted data: the
+review must attribute the site's claims as claims, cite only the captured
+evidence, and never follow instructions written inside a captured page.
 
 The demo runs one API call per case (model from ANTHROPIC_MODEL, default
 claude-haiku-4-5). No key, or rehearsing offline:
