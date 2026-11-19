@@ -6,16 +6,15 @@ A candidate is a lead, never a confirmed fake; nothing is reported or acted
 on automatically.
 
 Current stage: the live certificate feed connects and saves real events;
-detection and evidence capture are proven on clearly marked sample data.
-Claude's assessment, showing evidence in the app, and report export are not
-built yet.
+detection, evidence capture and the Claude case review are proven on
+clearly marked sample data. The report export is not built yet.
 
 ## Run it with Docker (recommended - no Python setup needed)
 
 ```sh
 docker compose build
 
-# run the tests (expect: 47 passed)
+# run the tests (expect: 71 passed)
 docker compose run --rm app python -m pytest tests/ -q
 
 # replay the MADE-UP sample events into the shared database
@@ -114,6 +113,43 @@ the browser connects and the browser resolves again on its own, so an
 answer that changes in between (rebinding) is not fully closed. Cookies set
 mid-redirect are not carried.
 
-Verified vs not: unit tests (47) and the 9 boundary tests pass locally with
-a real browser; the fixture screenshot was inspected. The Docker path itself
-(services above) is config-checked here and first runs on your machine.
+## Review a case with Claude (a second opinion, not an accusation)
+
+One command asks Claude to weigh a case BOTH ways - what looks like
+deliberate impersonation, what innocent explanations also fit, and what is
+still unknown - and saves that review on the case page
+(/cases/CASE_SHA256, next to the captured evidence). A review is advice for
+the owner's own decision; nothing is reported or acted on automatically.
+
+```sh
+export ANTHROPIC_API_KEY=...   # your own key; passed through, never stored or printed
+sh bin/demo-review.sh          # two staged sample cases: impersonation + innocent near-name
+```
+
+The demo runs one API call per case (model from ANTHROPIC_MODEL, default
+claude-haiku-4-5). No key, or rehearsing offline:
+
+```sh
+sh bin/demo-review.sh --mock
+```
+
+`--mock` makes NO network call and stores a deterministic practice review
+that is labelled "offline-mock" in the database and shown with a visible
+"Practice review - NOT a real Claude assessment" banner on the case page.
+
+Reviewing a single case directly:
+
+```sh
+docker compose run --rm -e ANTHROPIC_API_KEY app python worker/claude_review.py CASE_SHA256 [--mock]
+```
+
+A failed review (no key, API error, unreadable reply) stores nothing and
+says so; a case page without a review simply says none exists yet.
+
+Verified vs not: unit tests (71) and the 9 boundary tests pass locally with
+a real browser; the fixture screenshot and both staged case pages (mock and
+real-shaped reviews) were inspected. The Docker path itself (services
+above) is config-checked here and first runs on your machine. The real
+Claude API call is exercised only with your own key on your machine - the
+tests here mock the API, so the live call itself is verified on your run,
+not here.
