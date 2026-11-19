@@ -23,11 +23,15 @@ CASE = "TEST-CASE-SHA"
 
 def run_capture(out_dir, url, allow=()):
     capture_py = os.environ.get("CAPTURE_PY", "/app/capture.py")
+    # In the container netguard.py sits next to capture.py (the Dockerfile
+    # copies it). Locally it lives in worker/, so put it on PYTHONPATH.
+    worker_dir = os.path.join(os.path.dirname(os.path.dirname(capture_py)), "worker")
+    env = dict(os.environ, PYTHONPATH=worker_dir + os.pathsep + os.environ.get("PYTHONPATH", ""))
     cmd = [sys.executable, capture_py, "--case", CASE, "--url", url,
            "--out", str(out_dir)]
     for host in allow:
         cmd += ["--allow-host", host]
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120, env=env)
     meta = json.loads((out_dir / "meta.json").read_text())
     return proc, meta
 
