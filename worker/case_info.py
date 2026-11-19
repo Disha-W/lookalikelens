@@ -4,8 +4,8 @@
                                                    newest sample-marked case
   python worker/case_info.py CASE_SHA256       -> prints that case's domain
 
-Used by bin/collect-evidence.sh and bin/demo-evidence.sh so the shell never
-parses JSON or touches the database itself.
+Used by bin/demo-evidence.sh so the shell never parses JSON or touches
+the database itself.
 """
 import os
 import sys
