@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Dashboard - LookalikeLens{% endblock %}
-{% block headernote %}<span class="muted">watching</span> <strong>{{ watch_term }}</strong>{% endblock %}
+{% block headernote %}<span class="muted">watch name</span> <strong>{{ watch_term }}</strong>{% endblock %}
 {% block content %}
-<p class="sub">Watching the name <strong>{{ watch_term }}</strong>{% if watch_domain %}
-for <strong>{{ watch_domain }}</strong>{% endif %} in new public certificate
-records. The watcher picks up a saved change as new records arrive - usually
-within seconds, longer when the feed is quiet. It never visits your website.</p>
+<p class="sub">Set up to check new public certificate records for the name
+<strong>{{ watch_term }}</strong>{% if watch_domain %} (for
+<strong>{{ watch_domain }}</strong>){% endif %}. The background worker checks
+them while it is running, and picks up a saved change as new records
+arrive - usually within seconds, longer when the feed is quiet. It never
+visits your website.</p>
 
 <h2>Flagged for "{{ watch_term }}"</h2>
 {% if current_cases %}
@@ -30,8 +32,7 @@ within seconds, longer when the feed is quiet. It never visits your website.</p>
 </table>
 </div>
 {% else %}
-<p class="muted">Nothing flagged for this watch name yet. New certificates
-are checked as they appear.</p>
+<p class="muted">No stored findings for this watch name.</p>
 {% endif %}
 
 {% if earlier_cases %}
