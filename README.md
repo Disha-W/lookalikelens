@@ -122,15 +122,29 @@ still unknown - and saves that review on the case page
 the owner's own decision; nothing is reported or acted on automatically.
 
 ```sh
-# type your own key without echoing it or leaving it in shell history:
-read -s ANTHROPIC_API_KEY; export ANTHROPIC_API_KEY
+# type your own key without echoing it or leaving it in shell history
+# (same in macOS zsh and bash):
+echo "API key (typing hidden): "; read -rs ANTHROPIC_API_KEY; export ANTHROPIC_API_KEY; echo
 sh bin/demo-review.sh          # two staged sample cases: impersonation + innocent near-name
 ```
 
 The key is passed through to one container run and never stored, printed or
-committed. Page text shown to Claude is treated as untrusted data: the
-review must attribute the site's claims as claims, cite only the captured
-evidence, and never follow instructions written inside a captured page.
+committed.
+
+What the demo actually compares: the protected identity is the DEMO bakery
+"butterpaperbakes" with owned domain butterpaperbakes.shop - the domain was
+bought for the hackathon, but the business itself is fictional. The
+captured pages are internal fixture pages served only inside Docker, never
+the real butterpaperbakes.shop or any real site. The review weighs that
+fixture text against the configured business profile; there is no verified
+baseline capture of any real site to compare against, and a flagged staged
+case is never a real discovery.
+
+Page text shown to Claude is treated as untrusted data: the review must
+attribute the site's claims as claims, cite only the captured evidence, and
+never follow instructions written inside a captured page. These prompt
+rules are mitigations, not a guarantee: the pages Claude reads in this demo
+are our own fixtures; untrusted real pages would be a stronger test.
 
 The demo runs one API call per case (model from ANTHROPIC_MODEL, default
 claude-haiku-4-5). No key, or rehearsing offline:
