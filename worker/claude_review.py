@@ -183,11 +183,14 @@ def mock_review(case, evidence):
         unknowns.append("No successful capture yet - the flagged address "
                         "has not been photographed.")
     if any(word in text for word in ("gift card", "bank transfer")):
-        suspicious.append("Practice signal: the page pushes gift-card or "
-                          "bank-transfer payment, a common scam pattern.")
+        suspicious.append("Practice signal: the page asks for gift-card or "
+                          "bank-transfer payment. That alone is not proof of "
+                          "a scam - it only counts together with the "
+                          "look-alike domain.")
     if re.search(r"\d{2}\s?% off|off all", text):
-        suspicious.append("Practice signal: heavy discount pressure in the "
-                          "captured text.")
+        suspicious.append("Practice signal: heavy discount language in the "
+                          "captured text. Discounts alone are ordinary "
+                          "marketing, so this is a weak hint, not proof.")
     innocent = ["An unrelated business can share a similar name by coincidence."]
     unknowns.append("Whether the page copies the real shop's branding, photos "
                     "or logo.")
