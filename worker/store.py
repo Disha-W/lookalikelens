@@ -57,8 +57,91 @@ def open_db(path):
             source TEXT NOT NULL DEFAULT 'live'
         )"""
     )
+    # Evidence captured for a case by the isolated collector. The collector
+    # itself never writes here: it drops artifacts in an evidence folder and
+    # a trusted ingestion step records them. Screenshots live as files;
+    # this table holds their metadata only.
+    db.execute(
+        """CREATE TABLE IF NOT EXISTS evidence (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            case_sha256 TEXT NOT NULL REFERENCES cases(sha256),
+            captured_at REAL NOT NULL,
+            target_url TEXT NOT NULL,
+            final_url TEXT,
+            http_status INTEGER,
+            title TEXT,
+            text_excerpt TEXT,
+            html_sha256 TEXT,
+            screenshot_path TEXT,
+            screenshot_sha256 TEXT,
+            status TEXT NOT NULL,
+            error TEXT,
+            source TEXT NOT NULL
+        )"""
+    )
     db.commit()
     return db
+
+
+def get_case(db, case_sha256):
+    """Return one case row as a dict, or None."""
+    row = db.execute(
+        "SELECT sha256, domain, matched_term, first_seen_at, status, source"
+        " FROM cases WHERE sha256 = ?",
+        (case_sha256,),
+    ).fetchone()
+    if row is None:
+        return None
+    keys = ("sha256", "domain", "matched_term", "first_seen_at", "status", "source")
+    return dict(zip(keys, row))
+
+
+def newest_sample_case(db):
+    """Return the newest sample-marked case row as a dict, or None."""
+    row = db.execute(
+        "SELECT sha256, domain, matched_term, first_seen_at, status, source"
+        " FROM cases WHERE source = 'sample' ORDER BY first_seen_at DESC LIMIT 1"
+    ).fetchone()
+    if row is None:
+        return None
+    keys = ("sha256", "domain", "matched_term", "first_seen_at", "status", "source")
+    return dict(zip(keys, row))
+
+
+def insert_evidence(db, case_sha256, meta, screenshot_path, screenshot_sha256):
+    """Record one collector capture against a case. Returns the evidence id.
+
+    `meta` is the collector's meta.json (untrusted input: only the fields we
+    know are read, and the capture's provenance is always inherited from the
+    case, never taken from the file).
+    """
+    case = get_case(db, case_sha256)
+    if case is None:
+        raise ValueError(f"no such case: {case_sha256}")
+    cur = db.execute(
+        """INSERT INTO evidence (
+            case_sha256, captured_at, target_url, final_url, http_status,
+            title, text_excerpt, html_sha256, screenshot_path,
+            screenshot_sha256, status, error, source
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (
+            case_sha256,
+            float(meta.get("captured_at") or time.time()),
+            str(meta.get("target_url") or ""),
+            meta.get("final_url"),
+            meta.get("http_status"),
+            meta.get("title"),
+            meta.get("text_excerpt"),
+            meta.get("html_sha256"),
+            screenshot_path,
+            screenshot_sha256,
+            str(meta.get("status") or "error"),
+            meta.get("error"),
+            case["source"],
+        ),
+    )
+    db.commit()
+    return cur.lastrowid
 
 
 def prune_ct_events(db, keep):
