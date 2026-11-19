@@ -1,22 +1,20 @@
 {% extends "base.html" %}
 {% block title %}Dashboard - LookalikeLens{% endblock %}
-{% block headernote %}<span class="muted">domain</span> <strong>{{ watch_domain }}</strong>{% endblock %}
+{% block headernote %}<span class="muted">watching</span> <strong>{{ watch_term }}</strong>{% endblock %}
 {% block content %}
-<p class="sub">Dashboard for <strong>{{ watch_domain }}</strong>.
-In this demo build this scopes your view; the live certificate watcher
-follows its own configured name, so saving a domain does not start
-monitoring.</p>
+<p class="sub">Watching the name <strong>{{ watch_term }}</strong>{% if watch_domain %}
+for <strong>{{ watch_domain }}</strong>{% endif %} in new public certificate
+records. The watcher picks up a saved change as new records arrive - usually
+within seconds, longer when the feed is quiet. It never visits your website.</p>
 
-<h2>Flagged sites</h2>
-{% if cases %}
+<h2>Flagged for "{{ watch_term }}"</h2>
+{% if current_cases %}
 <div class="tablewrap">
 <table class="cases">
   <tr><th>Flagged domain</th><th>Verdict</th><th>Review</th><th>Found</th><th></th></tr>
-  {% for c in cases %}
+  {% for c in current_cases %}
   <tr>
-    <td class="dom">{{ c.domain }}
-      {% if c.source == "sample" %}<span class="pill pill-sample">sample</span>{% endif %}
-    </td>
+    <td class="dom"><a class="domlink" href="/cases/{{ c.sha256 }}">{{ c.domain }}</a></td>
     <td>
       {% if c.verdict %}<span class="pill verdict-{{ c.verdict }}">{{ c.verdict }}</span>
       {% else %}<span class="muted">not reviewed</span>{% endif %}
@@ -32,13 +30,58 @@ monitoring.</p>
 </table>
 </div>
 {% else %}
-<p class="muted">No stored cases yet.</p>
+<p class="muted">Nothing flagged for this watch name yet. New certificates
+are checked as they appear.</p>
 {% endif %}
 
-{% if not watching_demo_name and has_sample_cases %}
-<p class="note">The sample cases above matched the staged demo name
-"{{ demo_watch_term }}", not {{ watch_domain }}. There are no stored cases
-for your domain, and this demo build is not watching it.</p>
+{% if earlier_cases %}
+<h2>Found under an earlier watch name</h2>
+<p class="muted">These were flagged while watching a different name. They are
+not findings for "{{ watch_term }}".</p>
+<div class="tablewrap">
+<table class="cases">
+  <tr><th>Flagged domain</th><th>Watched name then</th><th>Verdict</th><th>Found</th><th></th></tr>
+  {% for c in earlier_cases %}
+  <tr>
+    <td class="dom"><a class="domlink" href="/cases/{{ c.sha256 }}">{{ c.domain }}</a></td>
+    <td class="muted">{{ c.matched_term }}</td>
+    <td>
+      {% if c.verdict %}<span class="pill verdict-{{ c.verdict }}">{{ c.verdict }}</span>
+      {% else %}<span class="muted">not reviewed</span>{% endif %}
+    </td>
+    <td class="muted">{{ c.first_seen }}</td>
+    <td><a class="open" href="/cases/{{ c.sha256 }}">Open</a></td>
+  </tr>
+  {% endfor %}
+</table>
+</div>
+{% endif %}
+
+{% if staged_cases %}
+<h2>Staged practice cases</h2>
+<p class="muted">Practice rows placed here for the demo. They are not live
+findings{% if watch_term %} for "{{ watch_term }}"{% endif %}.</p>
+<div class="tablewrap">
+<table class="cases">
+  <tr><th>Flagged domain</th><th>Verdict</th><th>Review</th><th>Found</th><th></th></tr>
+  {% for c in staged_cases %}
+  <tr>
+    <td class="dom"><a class="domlink" href="/cases/{{ c.sha256 }}">{{ c.domain }}</a>
+      <span class="pill pill-sample">sample</span></td>
+    <td>
+      {% if c.verdict %}<span class="pill verdict-{{ c.verdict }}">{{ c.verdict }}</span>
+      {% else %}<span class="muted">not reviewed</span>{% endif %}
+    </td>
+    <td class="muted">
+      {% if c.verdict %}{% if c.review_is_mock %}Practice review{% else %}Claude review{% endif %}
+      {% else %}-{% endif %}
+    </td>
+    <td class="muted">{{ c.first_seen }}</td>
+    <td><a class="open" href="/cases/{{ c.sha256 }}">Open</a></td>
+  </tr>
+  {% endfor %}
+</table>
+</div>
 {% endif %}
 
 <p class="foot">A flagged domain is a candidate, never proof. LookalikeLens
