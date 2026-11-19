@@ -39,9 +39,12 @@
 {% if evidence %}
 {% for item in evidence %}
 <div class="evidence">
-  {% if item.screenshot_path %}
+  {% if item.shot_available %}
   <img class="shot" src="/cases/{{ case.sha256 }}/evidence/{{ item.id }}/screenshot"
        alt="Screenshot of the captured page">
+  {% elif item.screenshot_path %}
+  <p class="muted">A screenshot was recorded for this capture, but the file
+  is not available on this server.</p>
   {% endif %}
   <div class="rows">
     <div class="row"><span class="k">Address visited</span>
