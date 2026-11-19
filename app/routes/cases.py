@@ -77,6 +77,10 @@ def case_page(request: Request, case_sha256: str):
         evidence = store.list_evidence(db, case_sha256)
     finally:
         db.close()
+    for item in evidence:
+        item["shot_available"] = bool(
+            evidence_path.safe_screenshot_path(EVIDENCE_DIR, item.get("screenshot_path"))
+        )
     return templates.TemplateResponse(request, "case.html", {
         "case": case,
         "case_when": _when(case["first_seen_at"]),
