@@ -1,22 +1,22 @@
 {% extends "base.html" %}
-{% block title %}Watch your domain - LookalikeLens{% endblock %}
+{% block title %}Your domain - LookalikeLens{% endblock %}
 {% block content %}
 <div class="center-box">
-  <h1>Which website should we watch over?</h1>
-  <p class="muted">Enter your business domain. LookalikeLens then watches
-  public certificate records for new domains that look like yours.</p>
+  <h1>Which website is yours?</h1>
+  <p class="muted">Enter your business domain to set up your dashboard.
+  In this demo build, saving it does not start live monitoring: the
+  certificate watcher follows its own configured name.</p>
   <form method="post" action="/watch">
     <label for="domain">Your domain</label>
     <div class="fieldrow">
       <input id="domain" name="domain" type="text" required
              placeholder="yourstore.com"
              value="{{ watch_domain or '' }}">
-      <button type="submit">Start watching</button>
+      <button type="submit">Save and view dashboard</button>
     </div>
     {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
   </form>
-  <p class="hint">You can change this later. We only watch the name; we never
-  touch your website. In this demo build the live certificate watcher keeps
-  its own configured name; this field scopes your dashboard.</p>
+  <p class="hint">You can change this later. This field scopes your
+  dashboard; we never touch your website.</p>
 </div>
 {% endblock %}
