@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Dashboard - LookalikeLens{% endblock %}
-{% block headernote %}<span class="muted">watching</span> <strong>{{ watch_domain }}</strong>{% endblock %}
+{% block headernote %}<span class="muted">domain</span> <strong>{{ watch_domain }}</strong>{% endblock %}
 {% block content %}
-<p class="sub">Watching over <strong>{{ watch_domain }}</strong>.
-New certificates are checked for names that look like it.</p>
+<p class="sub">Dashboard for <strong>{{ watch_domain }}</strong>.
+In this demo build this scopes your view; the live certificate watcher
+follows its own configured name, so saving a domain does not start
+monitoring.</p>
 
 <h2>Flagged sites</h2>
 {% if cases %}
@@ -36,7 +38,7 @@ New certificates are checked for names that look like it.</p>
 {% if not watching_demo_name and has_sample_cases %}
 <p class="note">The sample cases above matched the staged demo name
 "{{ demo_watch_term }}", not {{ watch_domain }}. There are no stored cases
-for your domain - and this demo build is not watching it yet.</p>
+for your domain, and this demo build is not watching it.</p>
 {% endif %}
 
 <p class="foot">A flagged domain is a candidate, never proof. LookalikeLens
