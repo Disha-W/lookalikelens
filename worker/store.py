@@ -39,6 +39,10 @@ REVIEW_VERDICTS = ("suspicious", "innocent", "unclear")
 def open_db(path):
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     db = sqlite3.connect(path)
+    # The app and the worker share this one file. WAL plus a busy timeout
+    # reduce lock contention between them (they do not eliminate it).
+    db.execute("PRAGMA journal_mode=WAL")
+    db.execute("PRAGMA busy_timeout=3000")
     db.execute(
         """CREATE TABLE IF NOT EXISTS ct_events (
             sha256 TEXT PRIMARY KEY,
@@ -346,3 +350,16 @@ def set_setting(db, key, value):
         (key, value),
     )
     db.commit()
+
+
+def load_watch_settings(db):
+    """The dashboard-saved watch pair (term, domain), or (None, None).
+
+    Both are written together by the app; a missing table or half-written
+    pair reads as unset so callers can fall back to their environment.
+    """
+    term = get_setting(db, "watch_term")
+    domain = get_setting(db, "watch_domain")
+    if term:
+        return term, domain
+    return None, None
