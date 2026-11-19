@@ -73,11 +73,14 @@ def test_repeated_certificate_dedupes_event_and_case():
 def test_fixture_file_end_to_end():
     db = fresh_db()
     results = [save_event(db, e, WATCH, OWNED, source="sample") for e in load_fixtures()]
-    # 4 fixture events: lookalike, owned subdomain, unrelated, repeat of lookalike
-    assert results == [(True, True), (True, False), (True, False), (False, False)]
-    assert db.execute("SELECT count(*) FROM ct_events").fetchone()[0] == 3
-    rows = db.execute("SELECT domain, status, source FROM cases").fetchall()
-    assert rows == [("butterpaperbakes-shop.test", "new", "sample")]
+    # 5 fixture events: lookalike, owned subdomain, unrelated, repeat of
+    # lookalike, innocent near-name (a candidate too - the REVIEW decides
+    # what to make of it; the matcher only flags similarity)
+    assert results == [(True, True), (True, False), (True, False), (False, False), (True, True)]
+    assert db.execute("SELECT count(*) FROM ct_events").fetchone()[0] == 4
+    rows = db.execute("SELECT domain, status, source FROM cases ORDER BY first_seen_at").fetchall()
+    assert rows == [("butterpaperbakes-shop.test", "new", "sample"),
+                    ("butterpaperbakes-nashik.test", "new", "sample")]
 
 
 def test_fixture_run_marks_cases_as_sample():
