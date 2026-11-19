@@ -41,7 +41,7 @@ _db.close()
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app.main import app, valid_domain  # noqa: E402
+from app.main import app, derive_watch_name, valid_domain, valid_watch_name  # noqa: E402
 
 client = TestClient(app)
 
@@ -67,6 +67,25 @@ def test_valid_domain_accepts_plain_domains(value):
 ])
 def test_valid_domain_rejects_everything_else(value):
     assert not valid_domain(value)
+
+
+@pytest.mark.parametrize("value,expected", [
+    ("butterpaperbakes.shop", "butterpaperbakes"),
+    ("shop.example.co.uk", "shop.example.co"),  # documented naive limit, owner edits
+    ("a-b.example", "a-b"),
+])
+def test_derive_watch_name(value, expected):
+    assert derive_watch_name(value) == expected
+
+
+@pytest.mark.parametrize("value", ["butterpaperbakes", "my-store123", "abc"])
+def test_valid_watch_name_accepts(value):
+    assert valid_watch_name(value)
+
+
+@pytest.mark.parametrize("value", ["", "ab", "has space", "dots.not-allowed", "-bad", "x" * 64])
+def test_valid_watch_name_rejects(value):
+    assert not valid_watch_name(value)
 
 
 def test_settings_roundtrip(tmp_path):
@@ -116,12 +135,12 @@ def test_watch_saves_domain_and_dashboard_lists_sample_case():
     assert "matched the staged demo name" not in page.text
 
 
-def test_dashboard_warns_when_domain_differs_from_demo():
-    client.post("/watch", data={"domain": "other-bakery.com"})
+def test_dashboard_scopes_staged_rows_when_domain_differs():
+    client.post("/watch", data={"domain": "other-bakery.com", "watch_term": "other-bakery"})
     page = client.get("/dashboard")
     assert page.status_code == 200
-    assert "matched the staged demo name" in page.text
-    assert "There are no stored cases" in page.text
+    assert "Staged practice cases" in page.text
+    assert "Nothing flagged for this watch name yet" in page.text
 
 
 def test_case_page_renders_with_mock_provenance():
@@ -150,18 +169,38 @@ def test_missing_screenshot_file_shows_unavailable_note():
     assert '<img class="shot"' not in page.text
 
 
-def test_start_page_describes_setup_not_monitoring():
-    """The entry page must not promise live monitoring it does not start."""
+def test_start_page_explains_watch_name_and_no_site_visits():
+    """The entry page says what is watched and that the site is never visited."""
     page = client.get("/")
     assert page.status_code == 200
-    assert "does not start live monitoring" in page.text
-    assert "Start watching" not in page.text
+    assert "never visits your website" in page.text
+    assert "Watch name" in page.text
+    assert "example.co.uk" in page.text  # the derivation limit is disclosed
 
 
-def test_dashboard_disclaims_monitoring_scope():
-    """The dashboard says the field scopes the view, not live watching."""
-    page = client.get("/")
+def test_watch_saves_domain_and_term_settings():
+    client.post("/watch", data={"domain": "myrealshop.example", "watch_term": "myrealshop"})
+    db = store.open_db(os.environ["DB_PATH"])
+    assert store.load_watch_settings(db) == ("myrealshop", "myrealshop.example")
+    db.close()
+
+
+def test_watch_derives_term_when_left_blank():
+    client.post("/watch", data={"domain": "butterpaperbakes.shop", "watch_term": ""})
+    db = store.open_db(os.environ["DB_PATH"])
+    assert store.load_watch_settings(db) == ("butterpaperbakes", "butterpaperbakes.shop")
+    db.close()
+
+
+def test_watch_rejects_bad_watch_name():
+    response = client.post("/watch", data={"domain": "butterpaperbakes.shop", "watch_term": "ab"})
+    assert response.status_code == 400
+    assert "watch name" in response.text
+
+
+def test_dashboard_states_pickup_cadence_honestly():
     client.post("/watch", data={"domain": "butterpaperbakes.shop"})
     page = client.get("/dashboard")
     assert page.status_code == 200
-    assert "does not start\nmonitoring" in page.text or "does not start monitoring" in page.text.replace("\n", " ")
+    assert "as new records arrive" in page.text
+    assert "never visits your website" in page.text
