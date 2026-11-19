@@ -14,7 +14,7 @@ clearly marked sample data. The report export is not built yet.
 ```sh
 docker compose build
 
-# run the tests (expect: 98 passed)
+# run the tests (expect: 119 passed)
 docker compose run --rm app python -m pytest tests/ -q
 
 # replay the MADE-UP sample events into the shared database
@@ -178,15 +178,21 @@ not here.
 
 Three pages, no sign-in in this demo build:
 
-1. `http://localhost:8000/` asks which domain to watch over and saves it.
-2. `http://localhost:8000/dashboard` lists the flagged candidates for it,
-   newest first, with each case's verdict and whether the review was a real
-   Claude call or an offline practice review.
+1. `http://localhost:8000/` asks for your domain and the watch name (the
+   name to look for in new certificates, pre-filled from the domain and
+   editable). Saving re-points the running watcher: no restart needed. It
+   picks the change up on the next feed message after its 15-second check
+   interval, which can take longer when the certificate feed is quiet.
+2. `http://localhost:8000/dashboard` lists flagged candidates in three
+   honest sections: flagged for the current watch name, found under an
+   earlier watch name (each row keeps the term that matched it), and staged
+   practice cases. Each case shows its verdict and whether the review was a
+   real Claude call or an offline practice review.
 3. Opening a flagged site shows its details: why it was flagged, what could
    be innocent, what is still unknown, and the captured evidence.
 
-The domain field scopes the dashboard only. The live certificate worker
-keeps its own configured watch terms (`WATCH_TERMS` in docker-compose.yml);
-multi-domain watching and accounts are not built yet. Sample cases always
-belong to the staged demo name: if you enter a different domain, the
-dashboard says the samples did not come from your domain.
+One watched domain at a time: saving a new one replaces the old, and the
+watcher's environment variables (`WATCH_TERMS`/`OWNED_DOMAINS` in
+docker-compose.yml) are only the fallback until the first save. The watch
+name is a simple name match, never a website visit. Multi-domain watching
+and accounts are not built yet.
