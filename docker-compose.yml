@@ -20,6 +20,20 @@ services:
       - bw-data:/data
       - bw-evidence:/evidence:ro
 
+  # Opt-in only. Merely starting the app never starts paid reviews.
+  reviewer:
+    build: .
+    profiles: ["reviewer"]
+    command: ["python", "worker/auto_review.py"]
+    environment:
+      DB_PATH: /data/brand_watch.db
+      AUTO_REVIEW_ENABLED: "${AUTO_REVIEW_ENABLED:-false}"
+      AUTO_REVIEW_MAX_ATTEMPTS: "${AUTO_REVIEW_MAX_ATTEMPTS:-0}"
+    volumes:
+      - bw-data:/data
+      # Absolute path OUTSIDE this repo. Default is empty and disabled.
+      - ${CLAUDE_REVIEW_KEY_FILE:-/dev/null}:/run/secrets/claude_review_key:ro
+
   worker:
     build: ./worker
     depends_on:
