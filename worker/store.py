@@ -171,13 +171,13 @@ def insert_evidence(db, case_sha256, meta, screenshot_path, screenshot_sha256):
 
 
 def list_evidence(db, case_sha256):
-    """Return all evidence rows for a case, newest first, as dicts."""
+    """Return all evidence rows for a case, newest capture first, as dicts."""
     keys = ("id", "captured_at", "target_url", "final_url", "http_status",
             "title", "text_excerpt", "html_sha256", "screenshot_path",
             "screenshot_sha256", "status", "error", "source")
     rows = db.execute(
         f"SELECT {', '.join(keys)} FROM evidence WHERE case_sha256 = ?"
-        " ORDER BY id DESC",
+        " ORDER BY captured_at DESC, id DESC",
         (case_sha256,),
     ).fetchall()
     return [dict(zip(keys, row)) for row in rows]
