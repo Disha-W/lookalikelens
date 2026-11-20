@@ -16,6 +16,17 @@
   First seen {{ case_when }}; looks like the watched name "{{ case.matched_term }}".
   A candidate to review, never a confirmed fake.</p>
 
+{% if automatic_review %}
+<div class="review-status" role="status">
+{% if automatic_review.status == 'pending' %}<p>Claude review queued. Refresh this page for the result.</p>
+{% elif automatic_review.status == 'running' %}<p>Claude review started. Refresh for the result. If it was interrupted, the owner must check it; it will not be retried automatically.</p>
+{% elif automatic_review.status == 'failed' %}<p>Claude review did not finish successfully. No automatic retry. The owner can check the attempt.</p>
+{% elif automatic_review.status == 'limit_reached' %}<p>Claude review paused: the approved attempt allowance has been used.</p>
+{% elif automatic_review.status == 'done' %}<p>Automatic Claude review saved.</p>
+{% endif %}
+</div>
+{% endif %}
+
 {% if review %}
 <h2 class="h-flag">Clues</h2>
 {% if review.suspicious_reasons %}
@@ -31,7 +42,7 @@
 {% if review.unknowns %}
 <ul>{% for item in review.unknowns %}<li>{{ item }}</li>{% endfor %}</ul>
 {% else %}<p class="muted">No open questions recorded.</p>{% endif %}
-{% else %}
+{% elif not automatic_review %}
 <p class="muted">No review yet. Run one with:
 <code>docker compose run --rm -e ANTHROPIC_API_KEY app python worker/claude_review.py {{ case.sha256 }}</code></p>
 {% endif %}
