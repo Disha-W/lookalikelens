@@ -37,11 +37,13 @@
 
 <h2 class="h-green">Evidence</h2>
 {% if evidence %}
-{% for item in evidence %}
+{% macro capture_block(item, shot_no) %}
 <div class="evidence">
   {% if item.shot_available %}
-  <img class="shot" src="/cases/{{ case.sha256 }}/evidence/{{ item.id }}/screenshot"
-       alt="Screenshot of the captured page">
+  <p><a class="evidence-link" href="/cases/{{ case.sha256 }}/evidence/{{ item.id }}/screenshot"
+     data-shot="/cases/{{ case.sha256 }}/evidence/{{ item.id }}/screenshot"
+     data-label="Evidence {{ shot_no }}">Evidence {{ shot_no }}</a>
+     <span class="muted">- photo of the captured page, opens on this page</span></p>
   {% elif item.screenshot_path %}
   <p class="muted">A screenshot was recorded for this capture, but the file
   is not available on this server.</p>
@@ -57,7 +59,16 @@
   {% if item.text_excerpt %}<blockquote>{{ item.text_excerpt }}</blockquote>{% endif %}
   {% if item.error %}<p class="muted">Capture error: {{ item.error }}</p>{% endif %}
 </div>
+{% endmacro %}
+{{ capture_block(evidence[0], evidence|length) }}
+{% if evidence|length > 1 %}
+<details class="previous-captures">
+<summary>Previous captures ({{ evidence|length - 1 }}) - earlier snapshots of the same address</summary>
+{% for item in evidence[1:] %}
+{{ capture_block(item, evidence|length - loop.index) }}
 {% endfor %}
+</details>
+{% endif %}
 {% else %}
 <p class="muted">No evidence captured yet. Capture the staged practice page with
 <code>sh bin/demo-evidence.sh</code>.</p>
@@ -65,4 +76,49 @@
 
 <p class="foot">"Suspicious" is a reason to look closer, not proof of a scam.
 LookalikeLens never contacts, reports or takes down a website on its own.</p>
+
+<div id="shot-overlay" class="shot-overlay" hidden role="dialog" aria-modal="true"
+     aria-labelledby="shot-overlay-title">
+  <div class="shot-panel">
+    <div class="shot-bar">
+      <span id="shot-overlay-title">Evidence</span>
+      <button type="button" id="shot-close" aria-label="Close evidence view">&times; Close</button>
+    </div>
+    <img id="shot-overlay-img" src="" alt="Screenshot of the captured page">
+  </div>
+</div>
+<script>
+(function () {
+  var overlay = document.getElementById("shot-overlay");
+  var img = document.getElementById("shot-overlay-img");
+  var title = document.getElementById("shot-overlay-title");
+  var closeBtn = document.getElementById("shot-close");
+  var lastFocus = null;
+  function openShot(src, label, trigger) {
+    img.src = src;
+    title.textContent = label;
+    overlay.hidden = false;
+    lastFocus = trigger || null;
+    closeBtn.focus();
+  }
+  function closeShot() {
+    overlay.hidden = true;
+    img.src = "";
+    if (lastFocus) lastFocus.focus();
+  }
+  document.querySelectorAll(".evidence-link").forEach(function (link) {
+    link.addEventListener("click", function (event) {
+      event.preventDefault();
+      openShot(link.getAttribute("data-shot"), link.getAttribute("data-label"), link);
+    });
+  });
+  closeBtn.addEventListener("click", closeShot);
+  overlay.addEventListener("click", function (event) {
+    if (event.target === overlay) closeShot();
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !overlay.hidden) closeShot();
+  });
+})();
+</script>
 {% endblock %}
