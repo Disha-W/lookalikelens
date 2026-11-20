@@ -198,14 +198,15 @@ def test_watch_rejects_bad_watch_name():
     assert "watch name" in response.text
 
 
-def test_dashboard_states_pickup_cadence_honestly():
+def test_dashboard_states_owner_action_copy():
     client.post("/watch", data={"domain": "butterpaperbakes.shop"})
     page = client.get("/dashboard")
     assert page.status_code == 200
     flat = " ".join(page.text.split())
-    assert "as new records arrive" in flat
-    assert "while it is running" in flat
-    assert "never visits your website" in flat
+    assert "Review potential lookalikes of" in flat
+    assert "butterpaperbakes.shop" in flat
+    assert "Open a case to see the available evidence" in flat
+    assert "decide whether it needs attention" in flat
 
 
 CASE2_SHA = "SAMPLEMULTICAPTURE00000000000000000000000000000000000000000000000002"
