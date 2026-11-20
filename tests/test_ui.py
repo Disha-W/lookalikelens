@@ -174,7 +174,7 @@ def test_start_page_explains_watch_name_and_no_site_visits():
     page = client.get("/")
     assert page.status_code == 200
     assert "never visits your website" in page.text
-    assert "Watch name" in page.text
+    assert "Business or brand name" in page.text
     assert "example.co.uk" in page.text  # the derivation limit is disclosed
 
 
