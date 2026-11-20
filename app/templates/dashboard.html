@@ -9,11 +9,11 @@ them while it is running, and picks up a saved change as new records
 arrive - usually within seconds, longer when the feed is quiet. It never
 visits your website.</p>
 
-<h2>Flagged for "{{ watch_term }}"</h2>
+<h2>Case board - flagged for "{{ watch_term }}"</h2>
 {% if current_cases %}
 <div class="tablewrap">
 <table class="cases">
-  <tr><th>Flagged domain</th><th>Verdict</th><th>Review</th><th>Found</th><th></th></tr>
+  <tr><th>Flagged domain</th><th>Reading</th><th>Review</th><th>Found</th><th></th></tr>
   {% for c in current_cases %}
   <tr>
     <td class="dom"><a class="domlink" href="/cases/{{ c.sha256 }}">{{ c.domain }}</a></td>
@@ -26,7 +26,7 @@ visits your website.</p>
       {% else %}-{% endif %}
     </td>
     <td class="muted">{{ c.first_seen }}</td>
-    <td><a class="open" href="/cases/{{ c.sha256 }}">Open</a></td>
+    <td><a class="open" href="/cases/{{ c.sha256 }}">Open case file</a></td>
   </tr>
   {% endfor %}
 </table>
@@ -36,7 +36,7 @@ visits your website.</p>
 {% endif %}
 
 {% if earlier_cases %}
-<h2>Found under an earlier watch name</h2>
+<h2>Cold files - found under an earlier watch name</h2>
 <p class="muted">These were flagged while watching a different name. They are
 not findings for "{{ watch_term }}".</p>
 <div class="tablewrap">
@@ -51,7 +51,7 @@ not findings for "{{ watch_term }}".</p>
       {% else %}<span class="muted">not reviewed</span>{% endif %}
     </td>
     <td class="muted">{{ c.first_seen }}</td>
-    <td><a class="open" href="/cases/{{ c.sha256 }}">Open</a></td>
+    <td><a class="open" href="/cases/{{ c.sha256 }}">Open case file</a></td>
   </tr>
   {% endfor %}
 </table>
@@ -62,9 +62,9 @@ not findings for "{{ watch_term }}".</p>
 <h2>Staged practice cases</h2>
 <p class="muted">Practice rows placed here for the demo. They are not live
 findings{% if watch_term %} for "{{ watch_term }}"{% endif %}.</p>
-<div class="tablewrap">
+<div class="tablewrap staged">
 <table class="cases">
-  <tr><th>Flagged domain</th><th>Verdict</th><th>Review</th><th>Found</th><th></th></tr>
+  <tr><th>Flagged domain</th><th>Reading</th><th>Review</th><th>Found</th><th></th></tr>
   {% for c in staged_cases %}
   <tr>
     <td class="dom"><a class="domlink" href="/cases/{{ c.sha256 }}">{{ c.domain }}</a>
@@ -78,7 +78,7 @@ findings{% if watch_term %} for "{{ watch_term }}"{% endif %}.</p>
       {% else %}-{% endif %}
     </td>
     <td class="muted">{{ c.first_seen }}</td>
-    <td><a class="open" href="/cases/{{ c.sha256 }}">Open</a></td>
+    <td><a class="open" href="/cases/{{ c.sha256 }}">Open case file</a></td>
   </tr>
   {% endfor %}
 </table>
