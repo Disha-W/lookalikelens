@@ -206,3 +206,110 @@ def test_dashboard_states_pickup_cadence_honestly():
     assert "as new records arrive" in flat
     assert "while it is running" in flat
     assert "never visits your website" in flat
+
+
+CASE2_SHA = "SAMPLEMULTICAPTURE00000000000000000000000000000000000000000000000002"
+CASE3_SHA = "SAMPLESINGLECAPTURE0000000000000000000000000000000000000000000000003"
+
+
+_PNG_1PX = (
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk"
+    "+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+)
+
+
+def _seed_case_with_captures(sha, captures, with_screenshots=False):
+    import base64
+    db = store.open_db(os.environ["DB_PATH"])
+    db.execute(
+        "INSERT INTO cases VALUES (?,?,?,?,?,?)",
+        (sha, "multi-capture.test", "butterpaperbakes",
+         time.time(), "new", "sample"),
+    )
+    shot_path = None
+    if with_screenshots:
+        shot_path = f"case-{sha}/shot.png"
+        full = os.path.join(os.environ["EVIDENCE_DIR"], shot_path)
+        os.makedirs(os.path.dirname(full), exist_ok=True)
+        with open(full, "wb") as fh:
+            fh.write(base64.b64decode(_PNG_1PX))
+    for i in range(captures):
+        store.insert_evidence(db, sha, {
+            "captured_at": time.time() + i,
+            "target_url": "http://fixture:8000/",
+            "final_url": "http://fixture:8000/",
+            "http_status": 200,
+            "title": "Butter Paper Bakes - Best Cheap Cakes Online",
+            "text_excerpt": "GRAND OPENING",
+            "status": "ok",
+        }, shot_path, None)
+    db.close()
+
+
+def test_case_page_folds_older_captures():
+    _seed_case_with_captures(CASE2_SHA, 2, with_screenshots=True)
+    page = client.get(f"/cases/{CASE2_SHA}")
+    assert page.status_code == 200
+    assert "Previous captures (1)" in page.text
+    # latest capture still rendered openly, older one folded away
+    assert page.text.count('class="evidence"') == 2
+    assert "<details" in page.text
+
+
+def test_case_page_single_capture_has_no_fold():
+    _seed_case_with_captures(CASE3_SHA, 1)
+    page = client.get(f"/cases/{CASE3_SHA}")
+    assert page.status_code == 200
+    assert "Previous captures" not in page.text
+    assert page.text.count('class="evidence"') == 1
+
+
+CASE4_SHA = "SAMPLECHRONOLOGY000000000000000000000000000000000000000000000000004"
+
+
+def test_latest_capture_follows_capture_time_not_insert_order():
+    db = store.open_db(os.environ["DB_PATH"])
+    db.execute(
+        "INSERT INTO cases VALUES (?,?,?,?,?,?)",
+        (CASE4_SHA, "chronology.test", "butterpaperbakes",
+         time.time(), "new", "sample"),
+    )
+    # inserted FIRST but with the LATER capture time: must be shown openly
+    store.insert_evidence(db, CASE4_SHA, {
+        "captured_at": time.time() + 3600,
+        "target_url": "http://fixture:8000/later",
+        "final_url": "http://fixture:8000/later",
+        "http_status": 200, "title": "Later capture", "status": "ok",
+    }, None, None)
+    # inserted SECOND but with an EARLIER capture time: must be folded
+    store.insert_evidence(db, CASE4_SHA, {
+        "captured_at": time.time(),
+        "target_url": "http://fixture:8000/earlier",
+        "final_url": "http://fixture:8000/earlier",
+        "http_status": 200, "title": "Earlier capture", "status": "ok",
+    }, None, None)
+    db.close()
+    page = client.get(f"/cases/{CASE4_SHA}")
+    assert page.status_code == 200
+    text = page.text
+    assert "Previous captures (1)" in text
+    assert text.index("http://fixture:8000/later") < text.index("Previous captures")
+    assert text.index("http://fixture:8000/earlier") > text.index("Previous captures")
+
+
+def test_case_page_numbers_evidence_links_and_overlay():
+    page = client.get(f"/cases/{CASE2_SHA}")
+    assert page.status_code == 200
+    # two captures: oldest keeps the stable label Evidence 1, latest is Evidence 2
+    assert page.text.count('class="evidence-link"') == 2
+    assert "Evidence 1" in page.text and "Evidence 2" in page.text
+    assert 'id="shot-overlay"' in page.text and 'role="dialog"' in page.text
+    assert "Escape" in page.text
+
+
+def test_case_page_without_screenshot_shows_no_evidence_link():
+    page = client.get(f"/cases/{CASE3_SHA}")
+    assert page.status_code == 200
+    # capture seeded without a screenshot file: no link, no inline image
+    assert 'class="evidence-link"' not in page.text
+    assert "not available on this server" not in page.text
