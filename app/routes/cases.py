@@ -19,6 +19,7 @@ from fastapi.templating import Jinja2Templates
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "worker"))
 import evidence_path  # noqa: E402
 import store  # noqa: E402
+from auto_review import job_status  # noqa: E402
 
 router = APIRouter()
 
@@ -75,6 +76,7 @@ def case_page(request: Request, case_sha256: str):
             raise HTTPException(status_code=404, detail="no such case")
         review = store.latest_review(db, case_sha256)
         evidence = store.list_evidence(db, case_sha256)
+        automatic_review = job_status(db, case_sha256)
     finally:
         db.close()
     for item in evidence:
@@ -85,6 +87,7 @@ def case_page(request: Request, case_sha256: str):
         "case": case,
         "case_when": _when(case["first_seen_at"]),
         "review": review,
+        "automatic_review": automatic_review,
         "review_when": _when(review["created_at"]) if review else None,
         "review_is_mock": bool(review and review["model"] == "offline-mock"),
         "evidence": evidence,
