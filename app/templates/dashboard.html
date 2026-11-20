@@ -2,12 +2,9 @@
 {% block title %}Dashboard - LookalikeLens{% endblock %}
 {% block headernote %}<span class="muted">watch name</span> <strong>{{ watch_term }}</strong>{% endblock %}
 {% block content %}
-<p class="sub">Set up to check new public certificate records for the name
-<strong>{{ watch_term }}</strong>{% if watch_domain %} (for
-<strong>{{ watch_domain }}</strong>){% endif %}. The background worker checks
-them while it is running, and picks up a saved change as new records
-arrive - usually within seconds, longer when the feed is quiet. It never
-visits your website.</p>
+<p class="sub">Review potential lookalikes of
+<strong>{{ watch_domain or watch_term }}</strong>. Open a case to see the
+available evidence and decide whether it needs attention.</p>
 
 <h2>Case board - flagged for "{{ watch_term }}"</h2>
 {% if current_cases %}
